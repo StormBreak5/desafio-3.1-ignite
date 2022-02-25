@@ -64,7 +64,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
     const newPosts = {
       ...posts,
       next_page: response.next_page,
-      results: [posts.results, ...postsResponseResults]
+      results: [...posts.results, ...postsResponseResults]
     }
 
     setPosts(newPosts)
@@ -80,7 +80,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
         <div className={styles.posts}>
           {posts.results.map(post => (
             <article className={styles.postContent} key={post.uid}>
-              <Link href={`/posts/${post.uid}`}>
+              <Link href={`/post/${post.uid}`}>
                 <a>
                   <h1>{post.data.title}</h1>
                   <p>{post.data.subtitle}</p>
@@ -100,7 +100,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
           ))}
           {posts.next_page && (
             <button type='button' onClick={loadMore}>
-              Carregar mais publicações
+              Carregar mais posts
             </button>
           )}
 
@@ -111,7 +111,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
   )
 }
 
-export const getStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     [Prismic.predicates.at('document.type', 'posts')],
