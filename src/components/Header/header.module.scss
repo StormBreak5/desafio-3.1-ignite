@@ -1,1 +1,17 @@
-// TODO
+.headerContainer {
+    max-width: 1120px;
+    height: 105px;
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+}
+
+.headerContent {
+    max-width: 1120px;
+    height: 7rem;
+    display: flex;
+    align-items: center;
+    
+
+    padding: 40px 0 40px 12.5rem;   
+}
