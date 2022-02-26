@@ -39,7 +39,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
       ...post,
       first_publication_date: format(
         new Date(post.first_publication_date),
-        'dd MM yyyy',
+        'dd MMM yyyy',
         {
           locale: ptBR
         }
