@@ -1,17 +1,18 @@
 import { GetStaticProps } from 'next';
 import Link from 'next/link'
 import Head from 'next/head'
+
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
 import { useState } from 'react';
 import { FiCalendar, FiUser } from 'react-icons/fi'
 
 import Prismic from '@prismicio/client'
 
 import { getPrismicClient } from '../services/prismic';
-
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
-import { ptBR } from 'date-fns/locale';
 
 interface Post {
   uid?: string;
@@ -29,10 +30,11 @@ interface PostPagination {
 }
 
 interface HomeProps {
+  preview: boolean;
   postsPagination: PostPagination;
 }
 
-export default function Home({ postsPagination }: HomeProps): JSX.Element {
+export default function Home({ preview, postsPagination }: HomeProps): JSX.Element {
   const [posts, setPosts] = useState<PostPagination>({
     ...postsPagination,
     results: postsPagination.results.map(post => ({
@@ -99,9 +101,16 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
             </article>
           ))}
           {posts.next_page && (
-            <button type='button' onClick={loadMore}>
+            <button type="button" onClick={loadMore}>
               Carregar mais posts
             </button>
+          )}
+          {preview && (
+            <aside className={commonStyles.exitPreviewButton}>
+              <Link href="/api/exit-preview">
+                <a>Sair do modo Preview</a>
+              </Link>
+            </aside>
           )}
 
         </div>
@@ -111,12 +120,13 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ preview = false, previewData }) => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     [Prismic.predicates.at('document.type', 'posts')],
     {
-      pageSize: 1
+      pageSize: 1,
+      ref: previewData?.ref ?? null,
     }
   );
 
@@ -127,7 +137,8 @@ export const getStaticProps: GetStaticProps = async () => {
 
   return {
     props: {
-      postsPagination
+      postsPagination,
+      preview
     },
 
     revalidate: 60 * 60 // 1 hour

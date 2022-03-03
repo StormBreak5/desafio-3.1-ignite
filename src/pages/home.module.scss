@@ -2,6 +2,20 @@
     max-width: 1120px;
     margin: 0 auto;
     padding: 0 2rem;
+
+    section > button {
+        color: var(--pink);
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-top: 3rem;
+        border: 0;
+        background: transparent;
+        transition: filter 0.2s;
+    
+        &:hover {
+          filter: brightness(0.7);
+        }
+      }
 }
 
 .posts {

@@ -1,19 +1,25 @@
+import { useEffect, useMemo, useState } from 'react';
+import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
+
+import { GetStaticPaths, GetStaticProps } from 'next';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import Head from 'next/head';
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { GetStaticPaths, GetStaticProps } from 'next';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { RichText } from 'prismic-dom';
-import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
-import Prismic from '@prismicio/client'
 
+import { RichText } from 'prismic-dom';
+import Prismic from '@prismicio/client'
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
+import UtterancesComments from '../../components/UtterancesComments';
 
 interface Post {
   first_publication_date: string | null;
+  uid: string,
   data: {
     title: string;
     banner: {
@@ -30,10 +36,13 @@ interface Post {
 }
 
 interface PostProps {
-  post: Post;
+  preview: boolean,
+  post: Post,
+  nextPost: Post | null,
+  prevPost: Post | null,
 }
 
-export default function Post({ post }: PostProps): JSX.Element {
+export default function Post({ preview, post, nextPost, prevPost }: PostProps): JSX.Element {
   const router = useRouter()
 
   const readingTime = post.data.content.reduce((acc, content) => {
@@ -91,6 +100,36 @@ export default function Post({ post }: PostProps): JSX.Element {
               )}
             </div>
           </article>
+          <footer className={styles.navigationController}>
+            <div>
+              {prevPost && (
+                <Link href={`/post/${prevPost.uid}`}>
+                  <a>
+                    <h4>{prevPost.data.title}</h4>
+                    <span>Post anterior</span>
+                  </a>
+                </Link>
+              )}
+            </div>
+            <div>
+              {nextPost && (
+                <Link href={`/post/${nextPost.uid}`}>
+                  <a>
+                    <h4>{nextPost.data.title}</h4>
+                    <span>Próximo post</span>
+                  </a>
+                </Link>
+              )}
+            </div>
+          </footer>
+          <UtterancesComments />
+          {preview && (
+            <aside className={commonStyles.exitPreviewButton}>
+              <Link href="/api/exit-preview">
+                <a>Sair do modo Preview</a>
+              </Link>
+            </aside>
+          )}
         </section>
       </main>
     </>
@@ -117,13 +156,40 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 };
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const { slug } = params
+export const getStaticProps: GetStaticProps = async ({
+  params,
+  preview = false,
+  previewData,
+}) => {
+  const { slug } = params;
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID('posts', String(slug), {});
+  const response = await prismic.getByUID('posts', String(slug), {
+    ref: previewData?.ref ?? null,
+  });
+
+  const nextPost = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      pageSize: 1,
+      orderings: '[document.first_publication_date]',
+      after: response.id,
+    }
+  );
+
+  const prevPost = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      pageSize: 1,
+      orderings: '[document.first_publication_date desc]',
+      after: response.id,
+    }
+  );
 
   return {
     props: {
+      preview,
+      nextPost: nextPost.results[0] ?? null,
+      prevPost: prevPost.results[0] ?? null,
       post: response,
     },
     revalidate: 60 * 60 //1 hour
